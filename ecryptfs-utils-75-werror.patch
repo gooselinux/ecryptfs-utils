@@ -1,0 +1,74 @@
+diff -up ecryptfs-utils_76.orig/src/libecryptfs/ecryptfs-stat.c.werror ecryptfs-utils_76.orig/src/libecryptfs/ecryptfs-stat.c
+--- ecryptfs-utils_76.orig/src/libecryptfs/ecryptfs-stat.c.werror	2009-07-17 01:24:18.000000000 +0200
++++ ecryptfs-utils_76.orig/src/libecryptfs/ecryptfs-stat.c	2009-07-21 08:10:43.516946733 +0200
+@@ -146,7 +146,7 @@ int ecryptfs_parse_stat(struct ecryptfs_
+ 	if (buf_size < (ECRYPTFS_FILE_SIZE_BYTES
+ 			+ MAGIC_ECRYPTFS_MARKER_SIZE_BYTES
+ 			+ 4)) {
+-		printf("%s: Invalid metadata size; must have at least [%lu] "
++		printf("%s: Invalid metadata size; must have at least [%zu] "
+ 		       "bytes; there are only [%zu] bytes\n", __FUNCTION__,
+ 		       (ECRYPTFS_FILE_SIZE_BYTES
+ 			+ MAGIC_ECRYPTFS_MARKER_SIZE_BYTES
+diff -up ecryptfs-utils_76.orig/src/pam_ecryptfs/pam_ecryptfs.c.werror ecryptfs-utils_76.orig/src/pam_ecryptfs/pam_ecryptfs.c
+--- ecryptfs-utils_76.orig/src/pam_ecryptfs/pam_ecryptfs.c.werror	2009-07-17 01:24:18.000000000 +0200
++++ ecryptfs-utils_76.orig/src/pam_ecryptfs/pam_ecryptfs.c	2009-07-21 08:10:07.068947047 +0200
+@@ -42,31 +42,6 @@
+ 
+ #define PRIVATE_DIR "Private"
+ 
+-static void error(const char *msg)
+-{
+-	syslog(LOG_ERR, "errno = [%i]; strerror = [%m]\n", errno);
+-	switch (errno) {
+-	case ENOKEY:
+-		syslog(LOG_ERR, "%s: Requested key not available\n", msg);
+-		return;
+-
+-	case EKEYEXPIRED:
+-		syslog(LOG_ERR, "%s: Key has expired\n", msg);
+-		return;
+-
+-	case EKEYREVOKED:
+-		syslog(LOG_ERR, "%s: Key has been revoked\n", msg);
+-		return;
+-
+-	case EKEYREJECTED:
+-		syslog(LOG_ERR, "%s: Key was rejected by service\n", msg);
+-		return;
+-	default:
+-		syslog(LOG_ERR, "%s: Unknown key error\n", msg);
+-		return;
+-	}
+-}
+-
+ /* returns: 0 for pam automounting not set, 1 for set, <0 for error */
+ static int ecryptfs_pam_automount_set(const char *homedir)
+ {
+@@ -249,8 +224,6 @@ static int private_dir(pam_handle_t *pam
+ 	char *autoumount = "auto-umount";
+ 	struct stat s;
+ 	pid_t pid;
+-	struct utmp *u;
+-	int count = 0;
+ 
+ 	if ((pwd = fetch_pwd(pamh)) == NULL) {
+ 		/* fetch_pwd() logged a message */
+@@ -297,7 +270,7 @@ static int private_dir(pam_handle_t *pam
+ 			if (stat(recorded, &s) != 0 && stat("/usr/share/ecryptfs-utils/ecryptfs-record-passphrase", &s) == 0) {
+ 				/* User has not recorded their passphrase */
+ 				unlink("/var/lib/update-notifier/user.d/ecryptfs-record-passphrase");
+-				symlink("/usr/share/ecryptfs-utils/ecryptfs-record-passphrase", "/var/lib/update-notifier/user.d/ecryptfs-record-passphrase");
++				rc=symlink("/usr/share/ecryptfs-utils/ecryptfs-record-passphrase", "/var/lib/update-notifier/user.d/ecryptfs-record-passphrase");
+ 				fd = open("/var/lib/update-notifier/dpkg-run-stamp", O_WRONLY|O_CREAT|O_NONBLOCK, 0666);
+ 				close(fd);
+ 			}
+@@ -390,7 +363,7 @@ PAM_EXTERN int pam_sm_chauthtok(pam_hand
+ 		}
+ 	} else {
+ 		syslog(LOG_ERR, "Error getting passwd info for user [%s]; "
+-		       "rc = [%ld]\n", username, rc);
++		       "rc = [%d]\n", username, rc);
+ 		goto out;
+ 	}
+ 	saved_uid = geteuid();
